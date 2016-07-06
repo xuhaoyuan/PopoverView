@@ -14,7 +14,8 @@ typedef void(^buttonClick)(NSInteger num);
 
 @property (nonatomic, copy) buttonClick touchNum;
 
--(id)initWithFrame:(CGRect)frame Dic:(NSDictionary *)diction Con:(UIViewController *)controller WithClickBacK:(buttonClick)touch;
+
++ showViewWithFrame:(CGRect)frame Dic:(NSDictionary *)diction Con:(UIViewController *)controller WithClickBacK:(buttonClick)touch;
 
 
 @end

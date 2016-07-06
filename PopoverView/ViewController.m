@@ -57,7 +57,8 @@
                                       ]
                                   ]
                           };
-    PopUpMenu *pop = [[PopUpMenu alloc]initWithFrame:CGRectMake(0, H_SCREEN - 50, W_SCREEN, 50) Dic:dic Con:self WithClickBacK:^(NSInteger num) {
+    
+    [PopUpMenu showViewWithFrame:CGRectMake(0, H_SCREEN - 50, W_SCREEN, 50) Dic:dic Con:self WithClickBacK:^(NSInteger num) {
         
         FirstViewController *first = [[FirstViewController alloc] init];
         [first setTitle:[NSString stringWithFormat:@"%ld",num]];
@@ -67,11 +68,10 @@
         NSLog(@"%ld",num);
         
     }];
-    [self.view addSubview:pop];
     
     
     
-
+    
 }
 
 

@@ -36,8 +36,14 @@ const CGFloat ButtonHeight = 40.f;
 
 @implementation PopUpMenu
 
++(instancetype)showViewWithFrame :(CGRect)frame Dic:(NSDictionary *)diction Con:(UIViewController *)controller WithClickBacK:(buttonClick)touch{
+    
+    PopUpMenu *pop = [[PopUpMenu alloc]initWithFrame:frame Dic:diction Con:controller WithClickBacK:touch];
+    [controller.view addSubview:pop];
+    return pop;
+}
 
--(id)initWithFrame:(CGRect)frame Dic:(NSDictionary *)diction Con:(UIViewController *)controller WithClickBacK:(buttonClick)touch
+-(instancetype)initWithFrame:(CGRect)frame Dic:(NSDictionary *)diction Con:(UIViewController *)controller WithClickBacK:(buttonClick)touch
 {
     self = [super initWithFrame:frame];
     if (self) {
