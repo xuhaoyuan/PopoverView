@@ -10,9 +10,8 @@
 
 @interface PopUpMenu : UIView
 
-typedef void(^buttonClick)(NSInteger num);
+typedef void(^buttonClick)(NSInteger section, NSInteger row);
 
-@property (nonatomic, copy) buttonClick touchNum;
 
 
 + showViewWithFrame:(CGRect)frame Dic:(NSDictionary *)diction Con:(UIViewController *)controller WithClickBacK:(buttonClick)touch;
@@ -21,12 +20,3 @@ typedef void(^buttonClick)(NSInteger num);
 @end
 
 
-
-@interface  PopoverView: UIView
-
-@property (nonatomic, copy) void (^ listBtnClick)(NSInteger num);
-
-- (id)initWithFrame:(CGRect)frame listTitle:(NSArray *)array;
-
-
-@end

@@ -19,6 +19,116 @@ const CGFloat ViewHeight = 5.f;
 const CGFloat ButtonHeight = 40.f;
 
 
+@interface  PopoverView: UIView
+
+@property (nonatomic, strong) NSArray *rowArray;
+@property (nonatomic, copy)buttonClick listBtnClick;
+
+@property (nonatomic, assign) NSInteger section;
+
+- (id)initWithFrame:(CGRect)frame listTitle:(NSArray *)array callBack:(buttonClick)click;
+
+@end
+
+@implementation PopoverView
+
+
+- (id)initWithFrame:(CGRect)frame listTitle:(NSArray *)array callBack:(buttonClick)click{
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = [UIColor clearColor];
+        self.clipsToBounds = YES;
+        self.alpha = 0;
+        self.listBtnClick = click;
+        self.rowArray = array;
+        [self addPopoverMenuTitle:array];
+    }
+    return self;
+}
+
+- (void) addPopoverMenuTitle:(NSArray *)titleArr{
+    
+    [titleArr enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL * stop) {
+        
+        CGFloat Y = (CGRectGetHeight(self.frame) - ViewHeight)/titleArr.count * idx;
+        CGFloat W = CGRectGetWidth(self.frame);
+        CGFloat H = (CGRectGetHeight(self.frame) - ViewHeight)/titleArr.count;
+        
+        UIButton *button = [[UIButton alloc] initWithFrame:CGRectMake(0,Y,W,H)];
+        [self addSubview:button];
+        [button addTarget:self action:@selector(buttonClick:) forControlEvents:UIControlEventTouchUpInside];
+        [button setTitle:obj forState:UIControlStateNormal];
+        [button setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
+        [button setTag:idx + 88];
+    }];
+    
+}
+
+- (void)buttonClick:(UIButton *)button{
+    
+    self.listBtnClick(_section,button.tag - 88);
+}
+
+
+- (void)drawRect:(CGRect)rect
+{
+    
+    UIBezierPath *arrowPath = [UIBezierPath bezierPath];
+    [arrowPath setLineWidth:1];
+    [arrowPath setLineCapStyle:kCGLineCapSquare];
+    const CGFloat arrowXM = CGRectGetWidth(self.frame)-1;
+    const CGFloat arrowY0 = CGRectGetHeight(self.frame)-ViewHeight;
+    const CGFloat arrowX0 = CGRectGetWidth(self.frame)/2 - ViewHeight;
+    const CGFloat arrowX1 = CGRectGetWidth(self.frame)/2 + ViewHeight;
+    const CGFloat arrowYL = CGRectGetHeight(self.frame) - 1;
+    const CGFloat arrowXL = CGRectGetWidth(self.frame)/2;
+    
+    [arrowPath moveToPoint:    (CGPoint){1, 1}];
+    [arrowPath addLineToPoint: (CGPoint){arrowXM, 1}];
+    [arrowPath addLineToPoint: (CGPoint){arrowXM, arrowY0}];
+    [arrowPath addLineToPoint: (CGPoint){arrowX1, arrowY0}];
+    [arrowPath addLineToPoint: (CGPoint){arrowXL, arrowYL}];
+    [arrowPath addLineToPoint: (CGPoint){arrowX0, arrowY0}];
+    [arrowPath addLineToPoint: (CGPoint){1, arrowY0}];
+    [arrowPath closePath];
+    
+    [[UIColor colorWithWhite:0.976 alpha:1.000] setFill];
+    [[UIColor colorWithRed:0.784 green:0.796 blue:0.749 alpha:1.000] setStroke];
+    
+    [arrowPath stroke];
+    [arrowPath fill];
+    
+    
+    UIBezierPath *bezier = [UIBezierPath bezierPath];
+    
+    [bezier setLineWidth:0.5f];
+    
+    __weak typeof(self) _self = self;
+    [_rowArray enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        UIBezierPath *bezier = [UIBezierPath bezierPath];
+        
+        if (idx == _self.rowArray.count -1 ) {
+            return ;
+        }
+        [[UIColor colorWithRed:0.784 green:0.796 blue:0.749 alpha:1.000] set];
+        [bezier setLineWidth:0.5f];
+        CGFloat x = 10;
+        CGFloat xm = rect.size.width - 10;
+        CGFloat y = (rect.size.height - ViewHeight) / _self.rowArray.count * idx + (rect.size.height - ViewHeight) / _self.rowArray.count;
+        
+        [bezier moveToPoint:(CGPoint){x, y}];
+        [bezier addLineToPoint:(CGPoint){xm,y}];
+        [bezier stroke];
+        
+        
+    }];
+    
+    
+}
+
+@end
+
+
 @interface PopUpMenu()
 {
     CGFloat _borderWidth;
@@ -26,9 +136,8 @@ const CGFloat ButtonHeight = 40.f;
 }
 @property (nonatomic, strong) NSDictionary *ListDic;
 @property (nonatomic, strong) NSMutableArray *tagArray;
-@property (nonatomic, strong) NSMutableArray *popViewArray;
 @property (nonatomic, strong) NSArray *btnListArr;
-@property (nonatomic, strong) PopoverView *popView;
+@property (nonatomic, copy) buttonClick touchNum;
 
 
 @end
@@ -54,22 +163,12 @@ const CGFloat ButtonHeight = 40.f;
         self.btnListArr = [self.ListDic objectForKey:@"listName"];;
         [self addButtonWithTitle:[self.ListDic objectForKey:@"name"]];
         
-        
+        UITapGestureRecognizer *topges = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(superViewGes)];
+        [_superView.view addGestureRecognizer:topges];
     }
     return self;
 }
-- (NSMutableArray *)tagArray{
-    if (!_tagArray ) {
-        _tagArray = [[NSMutableArray alloc] init];
-    }
-    return _tagArray;
-}
--(NSMutableArray *)popViewArray{
-    if (!_popViewArray) {
-        _popViewArray = [[NSMutableArray alloc] init];
-    }
-    return _popViewArray;
-}
+
 - (void)addButtonWithTitle:(NSArray *)titles{
     
     [titles enumerateObjectsUsingBlock:^(id  obj, NSUInteger idx, BOOL * stop) {
@@ -79,9 +178,10 @@ const CGFloat ButtonHeight = 40.f;
         [button setBackgroundColor:[UIColor colorWithWhite:0.976 alpha:1.000]];
         [button setTitle:obj forState:UIControlStateNormal];
         [button setTitleColor:[UIColor colorWithWhite:0.318 alpha:1.000] forState:UIControlStateNormal];
-        [button setTag:idx +333];
+        [button setTag:idx];
         [button.layer setBorderWidth:0.5f];
         [button.layer setBorderColor:[UIColor colorWithWhite:0.804 alpha:1.000].CGColor];
+        
         CGRect buttonReck = button.frame;
         buttonReck.origin.x = CGRectGetMinX(buttonReck) - _borderWidth;
         buttonReck.size.width = CGRectGetWidth(buttonReck) + _borderWidth * 2 ;
@@ -92,186 +192,78 @@ const CGFloat ButtonHeight = 40.f;
     }];
 }
 
-- (void)buttonTouch:(UIButton *)Btn{
-    [self popViewRemove];
-    if (Btn.tag - 333 <= self.btnListArr.count-1) {
-        [self addlistButton:self.btnListArr[Btn.tag - 333] buttonFrame:Btn];
+- (void)buttonTouch:(UIButton *)btn{
+    
+    if ([self needToLoadWith:btn.tag]) {
+        [self popViewRemoveWith:btn.tag];
+        [self addlistButton:self.btnListArr[btn.tag] buttonFrame:btn];
+    }else{
+        [self popViewRemoveWith:btn.tag];
     }
 }
 
 
 - (void)addlistButton:(NSArray *)listArray buttonFrame:(UIButton* )btn{
     
-    [self.tagArray addObject:[NSNumber numberWithInteger:btn.tag]];
-    if (self.tagArray.count > 2) {
-        [self.tagArray removeObjectAtIndex:0];
-    }
+    CGRect viewFram = btn.frame;
+    viewFram.size.height = listArray.count *ButtonHeight + ViewHeight;
+    viewFram.origin.x = viewFram.origin.x +10;
+    viewFram.size.width = viewFram.size.width - 20;
+    viewFram.origin.y = CGRectGetHeight(_superView.view.frame) - CGRectGetHeight(self.frame);
     
-    if(self.tagArray .count == 2  &&
-       ([[self.tagArray firstObject]integerValue] == [(NSNumber *)[self.tagArray lastObject]integerValue])){
-        
-        [self.tagArray removeAllObjects];
-        return;
-        
-    }else{
-        CGRect viewFram = btn.frame;
-        viewFram.size.height = listArray.count *ButtonHeight + ViewHeight;
-        viewFram.origin.x = viewFram.origin.x +10;
-        viewFram.size.width = viewFram.size.width - 20;
-        viewFram.origin.y =CGRectGetHeight(_superView.view.frame) - CGRectGetHeight(btn.frame)- ViewHeight;
-        
-        self.popView = [[PopoverView alloc]initWithFrame:viewFram listTitle:listArray];
-        UITapGestureRecognizer *topges = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(superViewGes)];
-        [_superView.view addGestureRecognizer:topges];
-        __weak typeof(self) vc = self;
-        [self.popView setListBtnClick:^(NSInteger num) {
-            vc.touchNum((btn.tag - 333)* 10 + num);
-            [vc.popView removeFromSuperview];
-        }];
-        
-        viewFram.size.height = 0;
-        [self.popView setClipsToBounds:YES];
-        [self.popView setFrame:viewFram];
-        [self.popView setAlpha:0];
-        [self.popView setTag:btn.tag+300];
-        [self.popViewArray addObject:self.popView];
-        [_superView.view addSubview:self.popView];
-        
-        [UIView animateWithDuration:0.3 animations:^{
-            CGRect viewFrame = viewFram;
-            viewFrame.size.height = listArray.count *ButtonHeight + ViewHeight;
-            viewFrame.origin.y = CGRectGetHeight(_superView.view.frame) - CGRectGetHeight(btn.frame)- ViewHeight -viewFrame.size.height;
-            [self.popView setFrame:viewFrame];
-            [self.popView setAlpha:1];
-        }];
-    }
-    
+    PopoverView *popView = [[PopoverView alloc]initWithFrame:viewFram listTitle:listArray callBack:self.touchNum];
 
+    [popView setSection:btn.tag];
+    
+    [_superView.view insertSubview:popView belowSubview:self];
+    
+    viewFram.origin.y = CGRectGetHeight(_superView.view.frame) - CGRectGetHeight(self.frame) - ViewHeight -viewFram.size.height;
+    
+    [UIView animateWithDuration:0.3
+                          delay:0
+         usingSpringWithDamping:0.8
+          initialSpringVelocity:0.8
+                        options:UIViewAnimationOptionCurveEaseOut
+                     animations:^{
+        [popView setFrame:viewFram];
+        [popView setAlpha:1];
+    } completion:^(BOOL finished) {
+        
+    }];
     
 }
 - (void)superViewGes{
-    [self popViewRemove];
-    
-    
-}
-- (void)popViewRemove{
-
-    if (self.popViewArray.count == 1) {
-        PopoverView *view = (PopoverView *)self.popViewArray[0];
-        [UIView animateWithDuration:0.2 animations:^{
-            CGRect viewReck = view.frame;
-            viewReck.origin.y = viewReck.origin.y + viewReck.size.height;
-            viewReck.size.height = 0;
-            [view setFrame:viewReck];
-        } completion:^(BOOL finished) {
-            [view removeFromSuperview];
-        }];
-        [self.popViewArray removeObjectAtIndex:0];
-
-    }
-}
-
-@end
-
-
-
-@interface  PopoverView()
-{
-    NSArray *_array;
-}
-@end
-
-@implementation PopoverView
-
-
-- (id)initWithFrame:(CGRect)frame listTitle:(NSArray *)array{
-    self = [super initWithFrame:frame];
-    if (self) {
-        self.backgroundColor = [UIColor clearColor];
-        _array = array;
-        [self addPopoverMenuTitle:array];
-    }
-    return self;
-}
-
-- (void) addPopoverMenuTitle:(NSArray *)titleArr{
-
-    [titleArr enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL * stop) {
-        
-        CGFloat Y = (CGRectGetHeight(self.frame) - ViewHeight)/titleArr.count * idx;
-        CGFloat W = CGRectGetWidth(self.frame);
-        CGFloat H = (CGRectGetHeight(self.frame) - ViewHeight)/titleArr.count;
-        
-        UIButton *button = [[UIButton alloc] initWithFrame:CGRectMake(0,Y,W,H)];
-        [self addSubview:button];
-        [button addTarget:self action:@selector(buttonClick:) forControlEvents:UIControlEventTouchUpInside];
-        [button setTitle:obj forState:UIControlStateNormal];
-        [button setTitleColor:[UIColor blackColor] forState:UIControlStateNormal];
-        [button setTag:idx +888];
-    }];
+    [self popViewRemoveWith:-1];
     
 }
-
-- (void)buttonClick:(UIButton *)button{
-    self.listBtnClick(button.tag - 888);
-}
-
-
-- (void)drawRect:(CGRect)rect
-{
-
-    UIBezierPath *arrowPath = [UIBezierPath bezierPath];
-    [arrowPath setLineWidth:1];
-    [arrowPath setLineCapStyle:kCGLineCapSquare];
-    const CGFloat arrowXM = CGRectGetWidth(self.frame)-1;
-    const CGFloat arrowY0 = CGRectGetHeight(self.frame)-ViewHeight;
-    const CGFloat arrowX0 = CGRectGetWidth(self.frame)/2 - ViewHeight;
-    const CGFloat arrowX1 = CGRectGetWidth(self.frame)/2 + ViewHeight;
-    const CGFloat arrowYL = CGRectGetHeight(self.frame) - 1;
-    const CGFloat arrowXL = CGRectGetWidth(self.frame)/2;
-
-    [arrowPath moveToPoint:    (CGPoint){1, 1}];
-    [arrowPath addLineToPoint: (CGPoint){arrowXM, 1}];
-    [arrowPath addLineToPoint: (CGPoint){arrowXM, arrowY0}];
-    [arrowPath addLineToPoint: (CGPoint){arrowX1, arrowY0}];
-    [arrowPath addLineToPoint: (CGPoint){arrowXL, arrowYL}];
-    [arrowPath addLineToPoint: (CGPoint){arrowX0, arrowY0}];
-    [arrowPath addLineToPoint: (CGPoint){1, arrowY0}];
-    [arrowPath closePath];
+- (BOOL)needToLoadWith:(NSInteger)btnTag{
     
-    [[UIColor colorWithWhite:0.976 alpha:1.000] setFill];
-    [[UIColor colorWithRed:0.784 green:0.796 blue:0.749 alpha:1.000] setStroke];
-    
-    [arrowPath stroke];
-    [arrowPath fill];
-
-    
-    UIBezierPath *bezier = [UIBezierPath bezierPath];
-    
-    [bezier setLineWidth:0.5f];
-        [_array enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-        UIBezierPath *bezier = [UIBezierPath bezierPath];
-        
-        if (idx == _array.count -1 ) {
-            return ;
+    for (UIView *view in _superView.view.subviews) {
+        if ([view isKindOfClass:[PopoverView class]]) {
+            return ((PopoverView *)view).section == btnTag ? NO : YES;
         }
-        [[UIColor colorWithRed:0.784 green:0.796 blue:0.749 alpha:1.000] set];
-        [bezier setLineWidth:0.5f];
-        CGFloat x = 10;
-        CGFloat xm = rect.size.width - 10;
-        CGFloat y = (rect.size.height - ViewHeight) / _array.count * idx + (rect.size.height - ViewHeight) / _array.count;
-        
-        [bezier moveToPoint:(CGPoint){x, y}];
-        [bezier addLineToPoint:(CGPoint){xm,y}];
-        [bezier stroke];
-
-        
-    }];
-    
-    
+    }
+    return YES;
 }
-     
+- (void)popViewRemoveWith:(NSInteger)btnTag{
+    
+    for (UIView *view in _superView.view.subviews) {
+        if ([view isKindOfClass:[PopoverView class]]) {
+            [UIView animateWithDuration:0.2 animations:^{
+                CGRect viewReck = view.frame;
+                viewReck.origin.y = CGRectGetHeight(_superView.view.frame);
+                [view setFrame:viewReck];
+            } completion:^(BOOL finished) {
+                [view removeFromSuperview];
+            }];
+            
+        }
+    }
+}
+
 @end
+
+
 
 
 

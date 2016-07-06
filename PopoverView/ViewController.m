@@ -58,14 +58,11 @@
                                   ]
                           };
     
-    [PopUpMenu showViewWithFrame:CGRectMake(0, H_SCREEN - 50, W_SCREEN, 50) Dic:dic Con:self WithClickBacK:^(NSInteger num) {
+    [PopUpMenu showViewWithFrame:CGRectMake(0, H_SCREEN - 50, W_SCREEN, 50) Dic:dic Con:self WithClickBacK:^(NSInteger section, NSInteger num) {
         
         FirstViewController *first = [[FirstViewController alloc] init];
-        [first setTitle:[NSString stringWithFormat:@"%ld",num]];
+        [first setTitle:[NSString stringWithFormat:@"%ld--%ld",section,num]];
         [self.navigationController pushViewController:first animated:YES];
-        
-        
-        NSLog(@"%ld",num);
         
     }];
     
